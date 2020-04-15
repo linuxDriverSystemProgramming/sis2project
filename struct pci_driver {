@@ -1,0 +1,15 @@
+struct pci_driver {
+  struct list_head        node;
+  const char              *name;
+  const struct pci_device_id *id_table;
+  int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);
+  void (*remove)(struct pci_dev *dev);
+  int (*suspend)(struct pci_dev *dev, pm_message_t state);
+  int (*resume)(struct pci_dev *dev);
+  void (*shutdown)(struct pci_dev *dev);
+  int (*sriov_configure)(struct pci_dev *dev, int num_vfs);
+  const struct pci_error_handlers *err_handler;
+  const struct attribute_group **groups;
+  struct device_driver    driver;
+  struct pci_dynids       dynids;
+};
