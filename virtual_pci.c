@@ -88,6 +88,76 @@ static struct pci_dev *pci_cdev_search_pci_dev(struct pci_cdev pci_cdev[], int s
   return pdev;  
 }
 
+static struct file_operations pci_ops = {
+  .owner    = THIS_MODULE,
+  .read     = pci_read,
+  .write     = pci_write,
+  .open     = pci_open,
+  .release   = pci_release
+};
+
+
+static int pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+  int ret, minor;
+  struct cdev *cdev;
+  dev_t devno;
+
+  /* add this pci device in pci_cdev */
+  if ((minor = pci_cdev_add(pci_cdev, MAX_DEVICE, dev)) < 0)
+    goto error;
+
+  /* compute major/minor number */
+  devno = MKDEV(major, minor);
+
+  /* allocate struct cdev */
+  cdev = cdev_alloc();
+
+  /* initialise struct cdev */
+  cdev_init(cdev, &pci_ops);
+  cdev->owner = THIS_MODULE;
+
+  /* register cdev */
+  ret = cdev_add(cdev, devno, 1);
+  if (ret < 0) {
+    dev_err(&(dev->dev), "Can't register character device\n");
+    goto error;
+  }
+  pci_cdev[minor].cdev = cdev;
+
+  dev_info(&(dev->dev), "%s The major device number is %d (%d).\n",
+         "Registeration is a success", MAJOR(devno), MINOR(devno));
+  dev_info(&(dev->dev), "If you want to talk to the device driver,\n");
+  dev_info(&(dev->dev), "you'll have to create a device file. \n");
+  dev_info(&(dev->dev), "We suggest you use:\n");
+  dev_info(&(dev->dev), "mknod %s c %d %d\n", DEVICE_NAME, MAJOR(devno), MINOR(devno));
+  dev_info(&(dev->dev), "The device file name is important, because\n");
+  dev_info(&(dev->dev), "the ioctl program assumes that's the\n");
+  dev_info(&(dev->dev), "file you'll use.\n");
+
+  /* enable the device */
+  pci_enable_device(dev);
+
+  /* 'alloc' IO to talk with the card */
+  if (pci_request_region(dev, BAR_IO, "IO-pci") == 0) {
+    dev_err(&(dev->dev), "Can't request BAR2\n");
+    cdev_del(cdev);
+    goto error;
+  }
+
+  /* check that BAR_IO is *really* IO region */
+  if ((pci_resource_flags(dev, BAR_IO) & IORESOURCE_IO) != IORESOURCE_IO) {
+    dev_err(&(dev->dev), "BAR2 isn't an IO region\n");
+    cdev_del(cdev);
+    goto error;
+  }
+
+  return 1;
+
+error:
+  return 0;
+}
+
 static struct cdev *pci_cdev_search_cdev(struct pci_cdev pci_cdev[], int size, int minor)
 {
 	int i;
