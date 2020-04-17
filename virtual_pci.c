@@ -417,5 +417,6 @@ static void pci_exit_module(void)
 
 	printk(KERN_DEBUG "Module pci exit\n");
 }
-
+module_init(pci_init_module);
+module_exit(pci_exit_module);
 
