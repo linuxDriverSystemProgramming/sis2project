@@ -35,3 +35,29 @@ struct pci_cdev {
 };
 
 static struct pci_cdev pci_cdev[MAX_DEVICE];
+
+static void pci_cdev_init(struct pci_cdev pci_cdev[], int size, int first_minor)
+{
+	int i;
+
+	for(i=0; i<size; i++) {
+		pci_cdev[i].minor   = first_minor++;
+		pci_cdev[i].pci_dev = NULL;
+		pci_cdev[i].cdev    = NULL;
+	}
+}
+
+static int pci_cdev_add(struct pci_cdev pci_cdev[], int size, struct pci_dev *pdev)
+{
+	int i, res = -1;
+
+	for(i=0; i<size; i++) {
+		if (pci_cdev[i].pci_dev == NULL) {
+			pci_cdev[i].pci_dev = pdev;
+			res = pci_cdev[i].minor;
+			break;
+		}
+	}
+	
+	return res;
+}
