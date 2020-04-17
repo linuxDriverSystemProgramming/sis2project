@@ -364,3 +364,38 @@ static struct pci_driver pci_driver = {
   .probe     = pci_probe,
   .remove   = pci_remove,
 };
+
+static int __init pci_init_module(void)
+{
+  int ret;
+
+  printk(KERN_DEBUG "Module pci init\n");
+
+  /* allocate (several) major number */
+  ret = alloc_chrdev_region(&devno, 0, MAX_DEVICE, "buffer");
+  if (ret < 0) {
+    printk(KERN_ERR "Can't get major\n");
+    return ret;
+  }
+
+  /* get major number and save it in major */
+  major = MAJOR(devno);
+
+  /* initialise pci_cdev */
+  pci_cdev_init(pci_cdev, MAX_DEVICE, MINOR(devno));
+
+  /* register pci driver */
+  ret = pci_register_driver(&pci_driver);
+  if (ret < 0) {
+    /* free major/minor number */
+    unregister_chrdev_region(devno, 1);
+
+    printk(KERN_ERR "pci-driver: can't register pci driver\n");
+    return ret;
+  }
+
+
+  return 0;
+}
+
+
