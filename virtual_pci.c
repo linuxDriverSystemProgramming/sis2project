@@ -118,6 +118,7 @@ static int pci_cdev_search_minor(struct pci_cdev pci_cdev[],
 
 	return minor;
 }
+
 static int pci_open(struct inode *inode, struct file *file)
 {
   int minor = iminor(inode);
@@ -153,4 +154,49 @@ static ssize_t pci_read(struct file *file,  /* see include/linux/fs.h   */
   }
 
   return byte_read;
+}
+
+static ssize_t pci_read(struct file *file,	/* see include/linux/fs.h   */
+			   char *buffer,	/* buffer to fill with data */
+			   size_t length,	/* length of the buffer     */
+			   loff_t * offset)
+{
+	int byte_read = 0;
+	unsigned char value;
+	struct pci_dev *pdev = (struct pci_dev *)file->private_data;
+	unsigned long pci_io_addr = 0;
+
+	pci_io_addr = pci_resource_start(pdev,BAR_IO);
+
+	while (byte_read < length) {
+		/* read a byte from the input */
+		value = inb(pci_io_addr + 1);
+
+		/* write the value in the user buffer */
+		put_user(value, &buffer[byte_read]);
+
+		byte_read++;
+	}
+
+	return byte_read;
+}
+
+
+static ssize_t pci_write(struct file *filp, const char *buffer, size_t len, loff_t * off) {
+	int i;
+	unsigned char value;
+	struct pci_dev *pdev = (struct pci_dev *)filp->private_data;
+	unsigned long pci_io_addr = 0;
+
+	pci_io_addr = pci_resource_start(pdev,BAR_IO);
+	
+	for(i=0; i<len; i++) {
+		/* read value on the buffer */
+		value = (unsigned char)buffer[i];
+
+		/* write data to the device */
+		outb(pci_io_addr+2, value);
+	}
+
+	return len;
 }
