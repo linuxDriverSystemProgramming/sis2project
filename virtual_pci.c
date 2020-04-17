@@ -398,4 +398,24 @@ static int __init pci_init_module(void)
   return 0;
 }
 
+static void pci_exit_module(void)
+{
+	int i;
+
+	/* unregister pci driver */
+	pci_unregister_driver(&pci_driver);
+
+	/* unregister character device */
+	for(i=0; i< MAX_DEVICE; i++) {
+		if (pci_cdev[i].pci_dev != NULL) {
+			cdev_del(pci_cdev[i].cdev);
+		}
+	}
+
+	/* free major/minor number */
+	unregister_chrdev_region(devno, MAX_DEVICE);
+
+	printk(KERN_DEBUG "Module pci exit\n");
+}
+
 
