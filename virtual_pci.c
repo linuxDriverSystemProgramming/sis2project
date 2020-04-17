@@ -61,3 +61,29 @@ static int pci_cdev_add(struct pci_cdev pci_cdev[], int size, struct pci_dev *pd
 	
 	return res;
 }
+
+static void pci_cdev_del(struct pci_cdev pci_cdev[], int size, struct pci_dev *pdev)
+{
+  int i;
+
+  for(i=0; i<size; i++) {
+    if (pci_cdev[i].pci_dev == pdev) {
+      pci_cdev[i].pci_dev = NULL;
+    }
+  }
+}
+
+static struct pci_dev *pci_cdev_search_pci_dev(struct pci_cdev pci_cdev[], int size, int minor)
+{
+  int i;
+  struct pci_dev *pdev = NULL;
+
+  for(i=0; i<size; i++) {
+    if (pci_cdev[i].minor == minor) {
+      pdev = pci_cdev[i].pci_dev;
+      break;
+    }
+  }
+
+  return pdev;  
+}
