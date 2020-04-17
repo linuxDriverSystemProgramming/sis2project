@@ -118,3 +118,39 @@ static int pci_cdev_search_minor(struct pci_cdev pci_cdev[],
 
 	return minor;
 }
+static int pci_open(struct inode *inode, struct file *file)
+{
+  int minor = iminor(inode);
+  file->private_data = (void *)pci_cdev_search_pci_dev(pci_cdev, MAX_DEVICE, minor);
+  return 0;
+}
+
+static int pci_release(struct inode *inode, struct file *file)
+{
+  return 0;
+}
+
+static ssize_t pci_read(struct file *file,  /* see include/linux/fs.h   */
+         char *buffer,  /* buffer to fill with data */
+         size_t length,  /* length of the buffer     */
+         loff_t * offset)
+{
+  int byte_read = 0;
+  unsigned char value;
+  struct pci_dev *pdev = (struct pci_dev *)file->private_data;
+  unsigned long pci_io_addr = 0;
+
+  pci_io_addr = pci_resource_start(pdev,BAR_IO);
+
+  while (byte_read < length) {
+    /* read a byte from the input */
+    value = inb(pci_io_addr + 1);
+
+    /* write the value in the user buffer */
+    put_user(value, &buffer[byte_read]);
+
+    byte_read++;
+  }
+
+  return byte_read;
+}
