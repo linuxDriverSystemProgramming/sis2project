@@ -12,8 +12,6 @@
 #define BAR_MEM			3
 
 MODULE_DESCRIPTION("A simple PCI driver");
-MODULE_AUTHOR("trem (tremyfr@yahoo.fr)");
-MODULE_LICENSE("GPL");
 
 /**
  * This table holds the list of (VendorID,DeviceID) supported by this driver
