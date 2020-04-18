@@ -12,7 +12,7 @@ sudo apt-get install linux-headers-$(uname -r)
 ## Usage
 
 ```bash
-sudo insmod pci_module.ko
+sudo insmod virtual_pci.ko
 ```
 
 ## Team tasks on Trello 
